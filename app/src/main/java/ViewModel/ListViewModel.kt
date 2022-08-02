@@ -1,39 +1,54 @@
 package ViewModel
 
+import Model.CountriesService
 import Model.Country
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import io.reactivex.SingleObserver
+import io.reactivex.disposables.CompositeDisposable
+import io.reactivex.disposables.Disposable
+import io.reactivex.rxjava3.observers.DisposableSingleObserver;
+
 
 class ListViewModel:ViewModel(){
-   val Countries = MutableLiveData<List<Country>>()
+    private val countriesService = CountriesService()
+    private val disposable = CompositeDisposable()
+    val Countries = MutableLiveData<List<Country>>()
     val CountryLoadError = MutableLiveData<Boolean>()
     val Loading = MutableLiveData<Boolean>()
+
     fun refresh(){
         fetchCountries()
     }
 
     private fun fetchCountries() {
-        val mockdata = listOf(Country("CountryA"),
-            Country("CountryB"),
-            Country("CountryC"),
-            Country("CountryD"),
-            Country("CountryE"),
-            Country("CountryF"),
-            Country("CountryG"),
-            Country("CountryH"),
-            Country("CountryI"),
-            Country("CountryJ"),
-            Country("CountryK"),
-            Country("CountryL"),
-            Country("CountryM"),
-            Country("CountryN"),
-            Country("CountryO"),
-            Country("CountryP"),
-            Country("CountryQ"),
-            Country("CountryR"))
-        Countries.value = mockdata
-        Loading.value=false
-        CountryLoadError.value = false
+        Loading.value = true
+        disposable.add(
+            countriesService.getCountries()
+                .subscribeOn(io.reactivex.schedulers.Schedulers.io())
+                .observeOn(io.reactivex.android.schedulers.AndroidSchedulers.mainThread())
+                .subscribeWith(object :DisposableSingleObserver<List<Country>>(),
+                    SingleObserver<List<Country>>, Disposable {
+                    override fun onSuccess(value: List<Country>?) {
+                            Countries.value = value
+                            CountryLoadError.value = false
+                           Loading.value = false
+                    }
+                    override fun onError(e: Throwable?) {
+                            CountryLoadError.value = true
+                            Loading.value = false
+                    }
+
+                    override fun onSubscribe(d: Disposable?) {
+
+                    }
+                })
+        )
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        disposable.clear()
     }
 
 }

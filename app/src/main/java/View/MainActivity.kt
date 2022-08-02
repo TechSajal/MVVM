@@ -3,6 +3,7 @@ package View
 import ViewModel.ListViewModel
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.os.Handler
 import android.view.View
 import android.widget.ProgressBar
 import android.widget.TextView
@@ -10,6 +11,7 @@ import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProviders
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.example.mvvm.R
 
 class MainActivity : AppCompatActivity() {
@@ -20,6 +22,15 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
       viewModel = ViewModelProviders.of(this)[ListViewModel::class.java]
         viewModel.refresh()
+
+       val str = findViewById<SwipeRefreshLayout>(R.id.swipeRefreshLayout)
+             str.setOnRefreshListener {
+                 viewModel.refresh()
+                 Handler().postDelayed(Runnable {
+                     str.isRefreshing = false
+                 },100)
+             }
+
         findViewById<RecyclerView>(R.id.countriesList).apply {
             layoutManager = LinearLayoutManager(context)
             adapter = countriesadapter
@@ -29,7 +40,10 @@ class MainActivity : AppCompatActivity() {
 
     private fun observeviewmodel() {
         viewModel.Countries.observe(this, Observer{countries ->
-            countries?.let { countriesadapter.updateCountries(it) }
+            countries?.let {
+                findViewById<RecyclerView>(R.id.countriesList).visibility = View.VISIBLE
+                countriesadapter.updateCountries(it) }
+
         })
         viewModel.CountryLoadError.observe(this,Observer{iserror ->
             iserror?.let { findViewById<TextView>(R.id.list_error).visibility =if(it) View.VISIBLE else View.GONE}
