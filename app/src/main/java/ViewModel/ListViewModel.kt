@@ -1,5 +1,6 @@
 package ViewModel
 
+import DI.DaggerApiComponents
 import Model.CountriesService
 import Model.Country
 import androidx.lifecycle.MutableLiveData
@@ -8,10 +9,15 @@ import io.reactivex.SingleObserver
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.disposables.Disposable
 import io.reactivex.rxjava3.observers.DisposableSingleObserver;
+import javax.inject.Inject
 
 
 class ListViewModel:ViewModel(){
-    private val countriesService = CountriesService()
+     @Inject
+    lateinit var countriesService :CountriesService
+    init {
+        DaggerApiComponents.create().inject(this)
+    }
     private val disposable = CompositeDisposable()
     val Countries = MutableLiveData<List<Country>>()
     val CountryLoadError = MutableLiveData<Boolean>()
